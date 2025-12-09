@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import Tesseract from 'tesseract.js';
-import { motion } from 'framer-motion';
 import { Upload, FileText, Download, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, ScanLine, Mic, FileText, ShieldCheck, Zap } from 'lucide-react';
+import { ArrowRight, ScanLine, Mic, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TiltCard } from '@/components/3d/TiltCard';
 
