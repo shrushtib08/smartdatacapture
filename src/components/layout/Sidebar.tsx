@@ -1,7 +1,9 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Image as ImageIcon, Mic, History, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
+import { supabase } from '@/lib/supabase';
+import { toast } from 'sonner';
 
 // Defined distinct colors for each menu item as requested
 const menuItems = [
@@ -45,6 +47,13 @@ const menuItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    toast.success("Logged out successfully");
+    navigate('/login');
+  };
 
   return (
     <div className="flex h-full w-64 flex-col bg-black/40 backdrop-blur-xl border-r border-white/10 shadow-2xl relative z-20">
@@ -84,12 +93,14 @@ export function Sidebar() {
       </div>
       
       <div className="p-4 border-t border-white/10 bg-white/5">
-        <Link to="/login">
-          <Button variant="ghost" className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10 group">
+        <Button 
+            variant="ghost" 
+            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10 group"
+            onClick={handleLogout}
+        >
             <LogOut className="mr-3 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
             Logout
-          </Button>
-        </Link>
+        </Button>
       </div>
     </div>
   );

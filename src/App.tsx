@@ -8,12 +8,13 @@ import Dashboard from './pages/Dashboard';
 import ImageToText from './pages/ImageToText';
 import VoiceToText from './pages/VoiceToText';
 import History from './pages/History';
+import SetupDatabase from './pages/SetupDatabase';
 import { Sidebar } from './components/layout/Sidebar';
 
 function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   // Public pages do not have the sidebar layout
-  const isPublicPage = ['/', '/login', '/register', '/forgot-password'].includes(location.pathname);
+  const isPublicPage = ['/', '/login', '/register', '/forgot-password', '/setup-database'].includes(location.pathname);
 
   if (isPublicPage) {
     return <>{children}</>;
@@ -50,6 +51,7 @@ function App() {
           <Route path="/image-to-text" element={<ImageToText />} />
           <Route path="/voice-to-text" element={<VoiceToText />} />
           <Route path="/history" element={<History />} />
+          <Route path="/setup-database" element={<SetupDatabase />} />
         </Routes>
       </Layout>
       <Toaster theme="dark" position="top-right" />

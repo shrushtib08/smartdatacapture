@@ -1,104 +1,150 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { TiltCard } from '@/components/3d/TiltCard';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 export default function Register() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  });
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    // Simulate registration
-    setTimeout(() => {
-      setLoading(false);
-      toast.success("Account created successfully!");
-      navigate('/dashboard');
-    }, 1500);
+    
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            full_name: formData.name,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        toast.success("Account created successfully! You can now log in.");
+        navigate('/login');
+      }
+    } catch (error: any) {
+      console.error('Registration Error:', error);
+      toast.error(error.message || "Failed to create account");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-[#050505] overflow-hidden relative">
-      
-      {/* Back to Home */}
-      <Link to="/" className="absolute top-8 left-8 z-50">
-        <Button variant="ghost" className="text-gray-400 hover:text-white hover:bg-white/10">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
-        </Button>
-      </Link>
+    <div className="min-h-screen w-full flex items-center justify-center bg-[#0a0a0a] p-4 relative overflow-hidden">
+      {/* Background Effects */}
+      <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]" />
 
-      {/* Background 3D blobs */}
-      <div className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse delay-75" />
-      
-      <TiltCard className="w-full max-w-md p-4 relative z-10">
-        <Card className="border-white/10 bg-black/60 backdrop-blur-2xl shadow-2xl relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-          <CardHeader className="space-y-1 text-center">
-            <div className="mx-auto mb-6 h-16 w-16 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-lg shadow-purple-500/20 flex items-center justify-center transform -rotate-3 hover:rotate-0 transition-transform">
-                <span className="text-3xl font-bold text-white">S</span>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="w-full max-w-md relative z-10"
+      >
+        <Card className="bg-black/40 border-white/10 backdrop-blur-xl shadow-2xl">
+          <CardHeader className="space-y-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Button variant="ghost" size="icon" className="h-8 w-8 -ml-2 text-white/70 hover:text-white" onClick={() => navigate('/')}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-2xl font-bold text-white">Create an account</CardTitle>
             </div>
-            <CardTitle className="text-3xl font-bold text-white tracking-tight">Create Account</CardTitle>
-            <CardDescription className="text-gray-400 text-base">
-              Join SmartCapture to start digitizing your data
+            <CardDescription className="text-white/60">
+              Enter your email below to create your account
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleRegister} className="space-y-5">
+            <form onSubmit={handleRegister} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-300">Full Name</Label>
-                <Input 
-                    id="name" 
-                    placeholder="John Doe" 
-                    type="text" 
-                    required 
-                    className="h-11 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
+                <Label htmlFor="name" className="text-white/80">Full Name</Label>
+                <Input
+                  id="name"
+                  placeholder="John Doe"
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-purple-500/50"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-300">Email Address</Label>
-                <Input 
-                    id="email" 
-                    placeholder="name@example.com" 
-                    type="email" 
-                    required 
-                    className="h-11 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
+                <Label htmlFor="email" className="text-white/80">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="m@example.com"
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-purple-500/50"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-300">Password</Label>
-                <Input 
-                    id="password" 
-                    type="password" 
-                    required 
-                    className="h-11 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
+                <Label htmlFor="password" className="text-white/80">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-purple-500/50"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-white/80">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  required
+                  className="bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-purple-500/50"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                 />
               </div>
               <Button 
                 type="submit" 
-                className="w-full h-11 text-base font-medium bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-0 shadow-lg shadow-purple-500/25 transition-all duration-300 hover:scale-[1.02]"
-                disabled={loading}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0"
+                disabled={isLoading}
               >
-                {loading ? (
-                    <span className="flex items-center gap-2">
-                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        Creating Account...
-                    </span>
-                ) : 'Sign Up'}
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Create Account
               </Button>
             </form>
-            <div className="mt-6 text-center text-sm text-gray-500">
-                <p>Already have an account? <Link to="/login" className="text-purple-400 cursor-pointer hover:underline font-medium">Sign in</Link></p>
-            </div>
           </CardContent>
+          <CardFooter>
+            <div className="text-sm text-white/60 text-center w-full">
+              Already have an account?{' '}
+              <Link to="/login" className="text-purple-400 hover:text-purple-300 font-medium">
+                Sign in
+              </Link>
+            </div>
+          </CardFooter>
         </Card>
-      </TiltCard>
+      </motion.div>
     </div>
   );
 }

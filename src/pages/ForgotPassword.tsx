@@ -7,21 +7,33 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [email, setEmail] = useState('');
 
-  const handleReset = (e: React.FormEvent) => {
+  const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/reset-password',
+      });
+
+      if (error) throw error;
+
       setSubmitted(true);
       toast.success("Reset link sent to your email");
-    }, 1500);
+    } catch (error: any) {
+      console.error('Reset Error:', error);
+      toast.error(error.message || "Failed to send reset link");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,6 +71,8 @@ export default function ForgotPassword() {
                         placeholder="name@example.com" 
                         type="email" 
                         required 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         className="h-11 bg-white/5 border-white/10 text-white placeholder:text-gray-600 focus:border-purple-500/50 focus:ring-purple-500/20 transition-all"
                     />
                 </div>

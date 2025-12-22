@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { exportToExcel, exportToPDF, exportToWord } from '@/lib/export-utils';
+import { supabase } from '@/lib/supabase';
 
 export default function ImageToText() {
   const [image, setImage] = useState<string | null>(null);
@@ -40,20 +41,31 @@ export default function ImageToText() {
           }
         },
       });
-      setText(result.data.text);
       
-      // Save to history (mock)
-      const history = JSON.parse(localStorage.getItem('captureHistory') || '[]');
-      history.unshift({
-        id: Date.now(),
-        type: 'image',
-        preview: image,
-        content: result.data.text,
-        date: new Date().toISOString()
-      });
-      localStorage.setItem('captureHistory', JSON.stringify(history));
+      const extractedText = result.data.text;
+      setText(extractedText);
       
-      toast.success('Text extracted successfully!');
+      // Save to Supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { error } = await supabase.from('captures').insert({
+            user_id: user.id,
+            type: 'image',
+            content: extractedText,
+            preview_url: image // Note: Saving large base64 strings to DB is not recommended for production, use Storage Buckets instead.
+        });
+
+        if (error) {
+            console.error('DB Save Error:', error);
+            toast.error("Extracted text, but failed to save to history (Database error)");
+        } else {
+            toast.success('Text extracted and saved to history!');
+        }
+      } else {
+        toast.warning("Text extracted, but not saved (Not logged in)");
+      }
+
     } catch (error) {
       console.error(error);
       toast.error('Failed to extract text.');

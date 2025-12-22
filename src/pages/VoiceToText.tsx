@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { exportToExcel, exportToPDF, exportToWord } from '@/lib/export-utils';
+import { supabase } from '@/lib/supabase';
 
 // Type definition for Web Speech API
 interface SpeechRecognition extends EventTarget {
@@ -68,19 +69,27 @@ export default function VoiceToText() {
     }
   }, []);
 
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     if (isRecording) {
         recognitionRef.current?.stop();
-        // Save to history
-        if (text) {
-             const history = JSON.parse(localStorage.getItem('captureHistory') || '[]');
-             history.unshift({
-                id: Date.now(),
-                type: 'voice',
-                content: text,
-                date: new Date().toISOString()
-             });
-             localStorage.setItem('captureHistory', JSON.stringify(history));
+        // Save to Supabase
+        if (text.trim().length > 0) {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { error } = await supabase.from('captures').insert({
+                    user_id: user.id,
+                    type: 'voice',
+                    content: text
+                });
+                if (error) {
+                    console.error('DB Error', error);
+                    toast.error("Failed to save voice note");
+                } else {
+                    toast.success("Voice note saved!");
+                }
+            } else {
+                toast.warning("Voice note recorded, but not saved (Not logged in)");
+            }
         }
     } else {
         recognitionRef.current?.start();
