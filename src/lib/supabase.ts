@@ -13,9 +13,13 @@ const isValidUrl = (urlString: string) => {
   }
 }
 
-// Determine the URL to use. If the env var is missing or is the placeholder "YOUR_API_KEY",
+// Export a flag to check if Supabase is truly connected
+// We check if the URL exists, is valid, and is NOT the placeholder text we use in the .env template
+export const isSupabaseConnected = supabaseUrl && isValidUrl(supabaseUrl) && !supabaseUrl.includes('placeholder') && !supabaseUrl.includes('YOUR_API_KEY');
+
+// Determine the URL to use. If the env var is missing or is the placeholder,
 // fallback to a syntactically valid URL to prevent the app from crashing on startup.
-const urlToUse = (supabaseUrl && isValidUrl(supabaseUrl)) 
+const urlToUse = isSupabaseConnected
   ? supabaseUrl 
   : 'https://placeholder.supabase.co';
 

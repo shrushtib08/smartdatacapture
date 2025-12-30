@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConnected } from '@/lib/supabase';
 
 export default function Login() {
   const navigate = useNavigate();
@@ -17,6 +17,12 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isSupabaseConnected) {
+      toast.error("Please connect Supabase to your project first (Top Right Button)");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -33,7 +39,12 @@ export default function Login() {
       }
     } catch (error: any) {
       console.error('Login Error:', error);
-      toast.error(error.message || "Failed to login");
+      // Check for specific email confirmation error
+      if (error.message === 'Email not confirmed' || error.code === 'email_not_confirmed') {
+        toast.error("Please verify your email address. Check your inbox for the confirmation link.");
+      } else {
+        toast.error(error.message || "Failed to login");
+      }
     } finally {
       setIsLoading(false);
     }
